@@ -364,7 +364,19 @@ class Main:
         self._state.set_iso_select_next()
 
     def _button_mode(self):
+        self._loading_thread = threading.Thread(target=self._mode_loading)
+        self._loading_thread.start()
         self._state.toogle_mode()
+
+    def _mode_loading(self):
+        loading_text = "Loading..."
+        while self._loading_thread.is_alive():
+            self._display.clear()
+            image = Image.new('1', (self._display.WIDTH_RES, self._display.HEIGHT_RES), "WHITE")
+            draw = ImageDraw.Draw(image)
+            draw.text((0, 0), loading_text, font=self._display._font)
+            self._display._disp.display_image(image)
+            time.sleep(0.5)
 
     def _button_mount(self):
         self._state.insert_iso()
