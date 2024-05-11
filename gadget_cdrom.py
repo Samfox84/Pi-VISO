@@ -30,7 +30,8 @@ LOGGER = logging.getLogger(__name__)
 
 class SH1106:
     def __init__(self):
-        spi = spidev.SpiDev(0, 0)
+        spi = sdisplay
+        pidev.SpiDev(0, 0)
         spi.max_speed_hz = 2000000
         spi.mode = 0
         self._spi = spi
@@ -230,6 +231,7 @@ class Display:
         self._font = ImageFont.truetype(FONT, 13)
         self._font_hdd = ImageFont.truetype(FONT, 52)
 
+        self.scroll_offset = 0
 
     def refresh(self, state):
         if state.get_mode() not in ALL_MODES:
@@ -248,34 +250,35 @@ class Display:
         if iso_name is None:
             iso_name = ""
 
-        iso_choice = ["", "", ""]
-        iso_select = state.get_iso_select()
         iso_ls = state.iso_ls(paths=False)
+        num_iso = len(iso_ls)
+        iso_display = []
 
-        if len(iso_ls) == 0:
-            iso_choice[1] = "    No image"
-        else:
-            iso_choice[1] = ">" + iso_ls[iso_select]
-            try:
-                if iso_select > 0:
-                    iso_choice[0] = " " + iso_ls[iso_select - 1]
-            except IndexError:
-                pass
-            try:
-                iso_choice[2] = " " + iso_ls[iso_select + 1]
-            except IndexError:
-                pass
+        # Split long iso names into multiple lines for scrolling
+        for name in iso_ls:
+            if len(name) > 21:
+                iso_display.extend([name[i:i+21] for i in range(0, len(name), 21)])
+            else:
+                iso_display.append(name)
+
+        # Adjust scroll offset
+        if self.scroll_offset >= len(iso_display):
+            self.scroll_offset = max(0, len(iso_display) - 3)
+        elif self.scroll_offset < 0:
+            self.scroll_offset = 0
+
+        # Display ISO names
+        for i in range(3):
+            iso_idx = i + self.scroll_offset
+            if iso_idx < num_iso:
+                draw.text((0, 15*i), ">" + iso_display[iso_idx], font=self._font)
 
         draw.text((0,0), mode_text + " •" + iso_name, font = self._font)
-        draw.text((0,15), iso_choice[0], font = self._font)
-        draw.text((0,30), iso_choice[1], font = self._font)
-        draw.text((0,45), iso_choice[2], font = self._font)
         self._disp.display_image(image)
 
     def clear(self):
         image = Image.new('1', (self._disp.WIDTH_RES, self._disp.HEIGHT_RES), "WHITE")
         self._disp.display_image(image)
-
 
 class WVSButtons:
     def __init__(self):
