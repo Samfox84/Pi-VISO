@@ -228,8 +228,8 @@ class Display:
         disp = SH1106()
 
         self._disp = disp
-        self._font = ImageFont.truetype(FONT, 13)
-        self._font_hdd = ImageFont.truetype(FONT, 52)
+        self._font = ImageFont.truetype(FONT, 8)
+        self._font_hdd = ImageFont.truetype(FONT,14)
 
         self.scroll_offset = 0
 
